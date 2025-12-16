@@ -1,0 +1,26 @@
+# Zig build artifacts
+.zig-cache/
+zig-out/
+
+# Disk images
+*.img
+*.iso
+
+# TAR archives (generated)
+initrd.tar
+src/initrd.tar
+
+# Built kernel in iso folder
+iso/boot/kernel.elf
+
+# IDE
+.vscode/
+.idea/
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Test files
+__pycache__/
+*.pyc
