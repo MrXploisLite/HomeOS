@@ -241,7 +241,7 @@ fn formatNum(val: usize, buf: []u8) usize {
 
 /// Initialize with some system logs
 pub fn initSystemLogs() void {
-    info("Home OS v0.24.0 started");
+    info("Ciko Kernel v0.1 started");
     info("GDT initialized");
     info("IDT initialized");
     info("Paging enabled (4MB pages)");
@@ -254,4 +254,5 @@ pub fn initSystemLogs() void {
     info("FAT32 filesystem mounted");
     info("Network stack ready");
     info("Desktop started");
+    info("Audit logging enabled");
 }

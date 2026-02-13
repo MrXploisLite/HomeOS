@@ -212,10 +212,11 @@ pub fn cmdTime() void {
 pub fn cmdVersion() void {
     writer.write("\n");
     writer.setColor(.light_cyan, .black);
-    writer.write("Home OS ");
+    writer.write("Home OS (Ciko Kernel)\n");
     writer.setColor(.white, .black);
     writer.write("Version 0.29.0\n");
     writer.setColor(.light_grey, .black);
+    writer.write("Kernel: Ciko v0.1\n");
     writer.write("Build: Phase 25.0 (New Features)\n");
     writer.write("Architecture: x86 (32-bit)\n");
 }
@@ -292,10 +293,11 @@ pub fn cmdAbout() void {
     writer.write("                                   HOME OS\n");
     writer.setColor(.light_grey, .black);
     writer.write("                        Copyright (C) 2025 Romy Rianata\n");
+    writer.write("                             Kernel: Ciko v0.1\n");
     writer.setColor(.light_cyan, .black);
     writer.write("================================================================================\n\n");
     writer.setColor(.white, .black);
-    writer.write("A hobby operating system written in Zig.\n\n");
+    writer.write("A hobby operating system written in Zig, powered by Ciko Kernel.\n\n");
     writer.setColor(.light_grey, .black);
     writer.write("Features:\n");
     writer.write("  - 32-bit x86 protected mode\n");

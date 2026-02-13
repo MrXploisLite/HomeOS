@@ -117,7 +117,7 @@ pub fn execute(cmd: []const u8, writer: OutputWriter) bool {
 }
 
 fn cmdHelp(w: OutputWriter) void {
-    w.write("Home OS Commands:\n");
+    w.write("Home OS Commands (Ciko Kernel):\n");
     w.write("  help      - Show this help\n");
     w.write("  version   - OS version\n");
     w.write("  about     - About Home OS\n");
@@ -146,6 +146,7 @@ fn cmdHelp(w: OutputWriter) void {
 
 fn cmdVersion(w: OutputWriter) void {
     w.write("Home OS Version 0.31.0\n");
+    w.write("Kernel: Ciko v0.1\n");
     w.write("Build: Phase 26 (Onion Routing)\n");
     w.write("Architecture: x86 (32-bit)\n");
 }
@@ -154,9 +155,10 @@ fn cmdAbout(w: OutputWriter) void {
     w.write("================================\n");
     w.write("         HOME OS\n");
     w.write("  Copyright 2025 Romy Rianata\n");
+    w.write("     Kernel: Ciko v0.1\n");
     w.write("================================\n");
     w.write("A privacy-focused hobby OS\n");
-    w.write("Written in Zig\n");
+    w.write("Written in Zig, powered by Ciko Kernel\n");
 }
 
 fn cmdUptime(w: OutputWriter) void {
@@ -411,7 +413,7 @@ fn cmdHostname(w: OutputWriter) void {
 }
 
 fn cmdUname(w: OutputWriter) void {
-    w.write("HomeOS 0.29.0 i386 Home OS Kernel\n");
+    w.write("HomeOS 0.31.0 i386 Ciko Kernel v0.1\n");
 }
 
 fn strStartsWith(str: []const u8, prefix: []const u8) bool {

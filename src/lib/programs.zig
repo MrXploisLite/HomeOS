@@ -53,6 +53,7 @@ fn programCounter() callconv(.c) void {
 
 fn programSysinfo() callconv(.c) void {
     syscall_write("Home OS - System Information\n");
+    syscall_write("Kernel: Ciko v0.1\n");
     syscall_write("Architecture: x86 (32-bit)\n");
     syscall_write("Mode: Protected Mode\n");
     syscall_exit(0);

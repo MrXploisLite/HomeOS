@@ -1,11 +1,11 @@
 # Home OS
 **Copyright © 2025 Romy Rianata**
 
-A minimal x86 operating system written in Zig, with extreme privacy, maximum speed, and high stability.
+A minimal x86 operating system written in Zig, powered by **Ciko Kernel**.
 
 ## 🎯 Project Vision
 
-Home OS is a personal operating system designed for:
+Home OS is a personal operating system running on the **Ciko Kernel**, designed for:
 - **Extreme Privacy**: No telemetry, no tracking, built-in Tor-like routing
 - **Maximum Speed**: Minimal overhead, direct hardware access
 - **High Stability**: Solid foundation, well-tested components

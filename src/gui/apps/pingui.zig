@@ -212,7 +212,9 @@ fn sendPing() void {
 
     // Simulate realistic latency based on target
     const base_time: u16 = getSimulatedLatency(target_ip);
-    const jitter: u16 = @truncate(rng.getRange(15)); // 0-15ms jitter
+    // Use random jitter for realism (0-50% of base time)
+    const jitter_max = @max(1, base_time / 2);
+    const jitter: u16 = @truncate(rng.getRange(jitter_max)); 
     const delay: u16 = base_time + jitter;
 
     // Small chance of packet loss for realism (5%)
@@ -233,15 +235,19 @@ fn getSimulatedLatency(ip: ipv4.IPv4Address) u16 {
         return 1; // ~1ms for local
     }
     // Google DNS (8.8.8.8, 8.8.4.4)
-    if (ip[0] == 8 and ip[1] == 8) {
-        return 15; // ~15-30ms typical
+    if (ip[0] == 8 and (ip[1] == 8 or ip[1] == 4)) {
+        return 15; // ~15ms typical
     }
     // Cloudflare DNS (1.1.1.1)
     if (ip[0] == 1 and ip[1] == 1 and ip[2] == 1 and ip[3] == 1) {
-        return 10; // ~10-25ms typical
+        return 12; // ~12ms typical
+    }
+    // Quad9 DNS (9.9.9.9)
+    if (ip[0] == 9 and ip[1] == 9 and ip[2] == 9 and ip[3] == 9) {
+        return 20; // ~20ms typical
     }
     // Default for other IPs
-    return 25; // ~25-40ms
+    return 45; // ~45ms internet average
 }
 
 /// Record ping result

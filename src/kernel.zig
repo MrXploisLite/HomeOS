@@ -1,4 +1,4 @@
-// Home OS Kernel - Phase 17 (Reorganized)
+// Ciko Kernel (Home OS) - Phase 17 (Reorganized)
 // Copyright © 2025 Romy Rianata - Home OS
 // Main kernel entry point and initialization
 
@@ -42,6 +42,10 @@ const ipc = @import("proc/ipc.zig");
 
 // Networking
 const net = @import("net/net.zig");
+
+// Security
+const panic_wipe = @import("security/panic_wipe.zig");
+const audit = @import("security/audit.zig");
 
 // Cryptography
 const crypto = @import("crypto/crypto.zig");
@@ -117,8 +121,8 @@ const initrd_data = @embedFile("initrd.tar");
 
 fn createSampleFiles() void {
     serial.write("Creating sample files...\n");
-    _ = global_vfs.write("hello.txt", "Hello from Home OS!\nThis is a sample file.\n") catch {};
-    _ = global_vfs.write("readme.txt", "Home OS - Phase 6 Filesystem\nRead/Write support enabled!\n") catch {};
+    _ = global_vfs.write("hello.txt", "Hello from Home OS (Ciko Kernel)!\nThis is a sample file.\n") catch {};
+    _ = global_vfs.write("readme.txt", "Home OS (Ciko Kernel) - Phase 6 Filesystem\nRead/Write support enabled!\n") catch {};
     _ = global_vfs.write("test.txt", "Test file content.\n") catch {};
     serial.write("Sample files created\n");
 }
@@ -131,6 +135,10 @@ pub fn panic(msg: []const u8, _: ?*@import("std").builtin.StackTrace, _: ?usize)
     writer.setColor(.light_red, .black);
     writer.write("\n!!! KERNEL PANIC: ");
     writer.write(msg);
+
+    // Trigger security wipe
+    panic_wipe.emergencyWipe();
+
     halt();
 }
 
@@ -179,11 +187,12 @@ export fn kernelMain(mb_info_addr: u32) callconv(.c) noreturn {
     writer.write("                                   HOME OS\n");
     writer.setColor(.light_grey, .black);
     writer.write("                        Copyright (C) 2025 Romy Rianata\n");
+    writer.write("                             Kernel: Ciko v0.1\n");
     writer.setColor(.light_cyan, .black);
     writer.write("================================================================================\n\n");
 
     writer.setColor(.yellow, .black);
-    writer.write("Hello Home OS by Romy Rianata\n\n");
+    writer.write("Hello Home OS (Ciko Kernel) by Romy Rianata\n\n");
     writer.setColor(.light_grey, .black);
     writer.write("Architecture: x86 (32-bit protected mode)\n\n");
 
@@ -217,9 +226,13 @@ export fn kernelMain(mb_info_addr: u32) callconv(.c) noreturn {
     initNetwork();
     initTor();
     initAudio();
-    initUsb();
+    initSystem("USB", initUsb); // Fixed: using initSystem wrapper
     initRtc();
+    initSystem("Audit Log", audit.init); // Initialize Audit first to log subsequent events
     initCrypto();
+
+    // Log successful boot
+    audit.log(.INFO, .SYSTEM_BOOT, "Kernel initialization complete");
 
     // All systems initialized
     writer.setColor(.light_green, .black);
@@ -245,7 +258,7 @@ export fn kernelMain(mb_info_addr: u32) callconv(.c) noreturn {
     writer.setColor(.light_cyan, .black);
     writer.write("================================================================================\n");
     writer.setColor(.light_green, .black);
-    writer.write("Home OS Shell (Recovery Mode)\n");
+    writer.write("Home OS Shell (Recovery Mode) - Ciko Kernel\n");
     writer.setColor(.light_grey, .black);
     writer.write("Type 'gui' to restart desktop, 'help' for commands\n");
     writer.setColor(.light_cyan, .black);

@@ -189,7 +189,7 @@ pub fn cmdGfxTest() void {
     graphics.drawLine(0, 0, 800, 600, graphics.WHITE);
     graphics.drawLine(800, 0, 0, 600, graphics.WHITE);
     font.drawString(300, 50, "Home OS Graphics Test", graphics.WHITE, null);
-    font.drawString(300, 70, "Phase 14: Graphics & Display", graphics.LIGHT_GRAY, null);
+    font.drawString(300, 70, "Powered by Ciko Kernel", graphics.LIGHT_GRAY, null);
     graphics.drawRect(600, 400, 150, 100, graphics.CYAN);
     graphics.fillRect(610, 410, 130, 80, graphics.MAGENTA);
     writer.setColor(.light_green, .black);

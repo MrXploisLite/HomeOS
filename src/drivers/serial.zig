@@ -83,3 +83,7 @@ pub fn writeHex(value: u32) void {
         writeChar(hex_chars[nibble]);
     }
 }
+
+pub fn printInt(value: u32) void {
+    writeInt(value);
+}

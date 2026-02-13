@@ -35,7 +35,7 @@ pub fn build(b: *std.Build) void {
     });
 
     // Add assembly file for ISR stubs
-    kernel.addAssemblyFile(b.path("src/isr.s"));
+    kernel.root_module.addAssemblyFile(b.path("src/isr.s"));
 
     // Add C++ files for interrupt handlers and IDT setup
     const cpp_flags = &[_][]const u8{
@@ -48,12 +48,12 @@ pub fn build(b: *std.Build) void {
         "-fno-stack-protector",
     };
 
-    kernel.addCSourceFile(.{
+    kernel.root_module.addCSourceFile(.{
         .file = b.path("src/interrupt.cpp"),
         .flags = cpp_flags,
     });
 
-    kernel.addCSourceFile(.{
+    kernel.root_module.addCSourceFile(.{
         .file = b.path("src/idt_setup.cpp"),
         .flags = cpp_flags,
     });
