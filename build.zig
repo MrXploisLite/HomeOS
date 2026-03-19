@@ -59,6 +59,14 @@ pub fn build(b: *std.Build) void {
     });
 
     kernel.setLinkerScript(b.path("linker.ld"));
+    
+    // Rust core integration step
+    const cargo_cmd = b.addSystemCommand(&[_][]const u8{
+        "cargo", "build", "--release", "--target", "i686-unknown-linux-gnu", "--manifest-path", "src/rust_core/Cargo.toml"
+    });
+    kernel.step.dependOn(&cargo_cmd.step);
+    kernel.addObjectFile(b.path("src/rust_core/target/i686-unknown-linux-gnu/release/librust_core.a"));
+
     b.installArtifact(kernel);
 
     // Run step for QEMU

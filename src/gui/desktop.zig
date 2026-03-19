@@ -78,7 +78,7 @@ var cached_time_len: usize = 0;
 var last_rtc_second: u8 = 255;
 
 // Version constant
-pub const VERSION = "0.32.0";
+pub const VERSION = "0.33.0";
 
 pub fn shouldExit() bool {
     return exit_requested or terminal.isExitRequested();

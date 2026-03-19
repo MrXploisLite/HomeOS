@@ -6,6 +6,8 @@ const font = @import("../../drivers/font.zig");
 const rtc = @import("../../drivers/rtc.zig");
 const window = @import("../window.zig");
 
+extern fn rust_calculate_fibonacci(n: u32) u32;
+
 /// Draw System Info content (responsive)
 pub fn drawSysInfo(win: *const window.Window, x: i32, y: i32) void {
     const content_h = win.height - @as(u32, @intCast(window.TITLE_BAR_HEIGHT)) - 8;
@@ -116,9 +118,12 @@ pub fn drawAbout(win: *const window.Window, x: i32, y: i32) void {
 
     // Title
     font.drawString(x, line_y, "Home OS", graphics.Color.rgb(50, 120, 200), null);
-    font.drawString(x + 64, line_y, "v0.32.0", graphics.DARK_GRAY, null);
+    font.drawString(x + 64, line_y, "v0.33.0", graphics.DARK_GRAY, null);
     line_y += line_spacing;
-    font.drawString(x, line_y, "Kernel: Ciko v0.1", graphics.DARK_GRAY, null);
+    font.drawString(x, line_y, "Kernel: Ciko v0.1 + Rust Hybrid", graphics.DARK_GRAY, null);
+    line_y += line_spacing;
+    font.drawString(x, line_y, "Rust Logic (Fib 10): ", graphics.DARK_GRAY, null);
+    drawInt(x + 140, line_y, rust_calculate_fibonacci(10));
     line_y += line_spacing + 6;
 
     // Separator

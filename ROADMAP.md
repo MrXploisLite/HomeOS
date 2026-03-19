@@ -3,7 +3,7 @@
 
 Copyright © 2025 Romy Rianata
 
-**Current Version: v0.32.0** | **Last Updated: December 17, 2025**
+**Current Version: v0.33.0** | **Last Updated: March 20, 2026**
 
 ---
 
@@ -669,7 +669,7 @@ Home OS is a minimal x86 operating system written in Zig with:
 - [ ] Shell Commands: `browse`, `wget` (future)
 
 **Version:**
-- [x] Updated to v0.32.0
+- [x] Updated to v0.33.0
 
 **Files:** `net/http.zig`, `browser/html.zig`, `gui/apps/browser.zig`, `gui/desktop.zig`, `gui/window.zig`
 

@@ -20,7 +20,7 @@ Home OS is a personal operating system running on the **Ciko Kernel**, designed 
 - **High Stability**: Solid foundation, well-tested components
 - **Learning**: Understanding OS internals from scratch
 
-## ✅ Current Status: v0.32.0 - Full Featured Desktop OS
+## ✅ Current Status: v0.33.0 - Full Featured Desktop OS
 
 ### Core Systems:
 - ✅ **Multiboot1 Bootloader** - GRUB compatible
@@ -279,5 +279,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-**Version**: 0.32.0  
-**Last Updated**: December 17, 2025
+**Version**: 0.33.0  
+**Last Updated**: March 20, 2026

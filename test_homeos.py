@@ -185,10 +185,10 @@ class HomeOSTestSuite:
         print(color("[VERSION CONSISTENCY TESTS]", Colors.BOLD + Colors.BLUE))
         
         version_files = [
-            ("src/shell/cmd_executor.zig", "0.32.0"),
-            ("src/shell/cmd_system.zig", "0.32.0"),
-            ("src/gui/apps/sysinfo.zig", "0.32.0"),
-            ("src/gui/desktop.zig", "0.32.0"),
+            ("src/shell/cmd_executor.zig", "0.33.0"),
+            ("src/shell/cmd_system.zig", "0.33.0"),
+            ("src/gui/apps/sysinfo.zig", "0.33.0"),
+            ("src/gui/desktop.zig", "0.33.0"),
         ]
         
         for filepath, expected_version in version_files:

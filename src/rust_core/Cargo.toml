@@ -1,0 +1,12 @@
+[package]
+name = "rust_core"
+version = "0.33.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true

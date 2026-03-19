@@ -214,7 +214,7 @@ pub fn cmdVersion() void {
     writer.setColor(.light_cyan, .black);
     writer.write("Home OS (Ciko Kernel)\n");
     writer.setColor(.white, .black);
-    writer.write("Version 0.32.0\n");
+    writer.write("Version 0.33.0\n");
     writer.setColor(.light_grey, .black);
     writer.write("Kernel: Ciko v0.1\n");
     writer.write("Build: Phase 25.0 (New Features)\n");
