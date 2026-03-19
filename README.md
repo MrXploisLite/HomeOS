@@ -1,7 +1,16 @@
-# Home OS
-**Copyright © 2025 Romy Rianata**
+<div align="center">
+  <img src="assets/logo.png" alt="Home OS Logo" width="400"/>
+  <h1>Home OS</h1>
+  <p><strong>A minimal, privacy-first x86 operating system written in Zig, powered by Ciko Kernel.</strong></p>
 
-A minimal x86 operating system written in Zig, powered by **Ciko Kernel**.
+  [![Zig Version](https://img.shields.io/badge/Zig-0.15.2-F7A41D.svg?style=for-the-badge&logo=zig)](https://ziglang.org/)
+  [![Architecture](https://img.shields.io/badge/Architecture-x86_32-00599C.svg?style=for-the-badge)]()
+  [![License](https://img.shields.io/badge/License-MIT-success.svg?style=for-the-badge)](LICENSE)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
+  
+</div>
+
+<br>
 
 ## 🎯 Project Vision
 
@@ -259,7 +268,8 @@ qemu-system-i386 -cdrom HomeOS.iso -m 512M -vga std
 
 ## 📄 License
 
-**Copyright © 2025 Romy Rianata** - All rights reserved.
+This project is licensed under the [MIT License](LICENSE).  
+**Copyright © 2025 Romy Rianata**.
 
 ## 🙏 Acknowledgments
 
