@@ -123,11 +123,12 @@ pub const Window = struct {
 };
 
 // Modern colors
-const TITLE_FOCUSED = Color.rgb(55, 55, 60);
-const TITLE_UNFOCUSED = Color.rgb(80, 80, 85);
+const TITLE_FOCUSED = Color.rgba(40, 45, 55, 235); // Glass dark mode
+const TITLE_UNFOCUSED = Color.rgba(60, 65, 75, 180);
 const TITLE_TEXT = Color.rgb(255, 255, 255);
-const WINDOW_BODY = Color.rgb(240, 240, 245);
-const WINDOW_BORDER = Color.rgb(160, 160, 165);
+const WINDOW_BODY = Color.rgba(240, 240, 245, 240); // 94% opacity white frosted glass
+const WINDOW_BORDER_FOCUSED = Color.rgba(80, 150, 255, 255); // Glowing cyan active
+const WINDOW_BORDER = Color.rgba(140, 140, 145, 150);
 const SHADOW_COLOR = Color.rgba(0, 0, 0, 80);
 
 // Button colors
@@ -140,40 +141,49 @@ const BTN_ICON = Color.rgb(80, 80, 80);
 /// Optimized window frame drawing - reduced draw calls
 pub fn drawFrame(win: *const Window) void {
     const title_color = if (win.focused) TITLE_FOCUSED else TITLE_UNFOCUSED;
+    const border_col = if (win.focused) WINDOW_BORDER_FOCUSED else WINDOW_BORDER;
     const body_h = win.height - @as(u32, @intCast(TITLE_BAR_HEIGHT));
 
-    // Shadow (skip if window is at edge)
+    // Hyprland Shadow Blur
     if (win.x > 0 and win.y > 0) {
-        graphics.fillRect(win.x + 4, win.y + 4, win.width, win.height, SHADOW_COLOR);
+        graphics.fillRectAlpha(win.x - 4, win.y - 4, win.width + 16, win.height + 16, Color.rgba(0,0,0, 30));
+        graphics.fillRectAlpha(win.x + 8, win.y + 8, win.width, win.height, SHADOW_COLOR);
     }
 
-    // Title bar
-    graphics.fillRect(win.x, win.y, win.width, @intCast(TITLE_BAR_HEIGHT), title_color);
+    // Window Content Body (Glass)
+    graphics.fillRectAlpha(win.x, win.y + TITLE_BAR_HEIGHT, win.width, body_h, WINDOW_BODY);
+
+    // Title bar (Rounded Top simulation through fillRect limits)
+    graphics.fillRectAlpha(win.x, win.y, win.width, @intCast(TITLE_BAR_HEIGHT), title_color);
+
+    // Border (Hyprland Neon Border)
+    if (win.focused) {
+        // Glowing Double Border Array
+        graphics.fillRectAlpha(win.x - 2, win.y - 2, win.width + 4, 2, border_col);
+        graphics.fillRectAlpha(win.x - 2, win.y + @as(i32, @intCast(win.height)), win.width + 4, 2, border_col);
+        graphics.fillRectAlpha(win.x - 2, win.y - 2, 2, win.height + 4, border_col);
+        graphics.fillRectAlpha(win.x + @as(i32, @intCast(win.width)), win.y - 2, 2, win.height + 4, border_col);
+    } else {
+        graphics.drawRect(win.x, win.y, win.width, win.height, WINDOW_BORDER);
+    }
 
     // Title text
     font.drawString(win.x + 10, win.y + 6, win.getTitle(), TITLE_TEXT, null);
 
-    // Control buttons - pre-compute positions
-    const btn_y = win.y + 6;
+    // Control buttons (MacOS Style Apple Colors)
+    const btn_y = win.y + 7;
     const close_x = win.x + @as(i32, @intCast(win.width)) - 22;
     const max_x = close_x - 20;
     const min_x = max_x - 20;
 
-    // Draw buttons (simplified circles - just 2 rects each)
-    graphics.fillRect(close_x + 1, btn_y + 1, 12, 12, BTN_CLOSE);
-    graphics.fillRect(max_x + 1, btn_y + 1, 12, 12, if (win.maximized) Color.rgb(100, 200, 255) else BTN_MAXIMIZE);
-    graphics.fillRect(min_x + 1, btn_y + 1, 12, 12, BTN_MINIMIZE);
+    graphics.fillCircle(close_x + 6, btn_y + 6, 6, BTN_CLOSE);
+    graphics.fillCircle(max_x + 6, btn_y + 6, 6, if (win.maximized) Color.rgb(100, 200, 255) else BTN_MAXIMIZE);
+    graphics.fillCircle(min_x + 6, btn_y + 6, 6, BTN_MINIMIZE);
 
-    // Window body
-    graphics.fillRect(win.x, win.y + TITLE_BAR_HEIGHT, win.width, body_h, WINDOW_BODY);
-
-    // Border (4 lines)
-    graphics.drawRect(win.x, win.y, win.width, win.height, WINDOW_BORDER);
-
-    // Resize handle (simplified - just corner indicator)
+    // Resize handle
     const rx = win.x + @as(i32, @intCast(win.width)) - 10;
     const ry = win.y + @as(i32, @intCast(win.height)) - 10;
-    graphics.fillRect(rx, ry, 8, 8, Color.rgb(180, 180, 185));
+    graphics.fillRectAlpha(rx, ry, 8, 8, Color.rgba(180, 180, 185, 100));
 }
 
 fn drawCircleButton(x: i32, y: i32, size: i32, color: Color) void {

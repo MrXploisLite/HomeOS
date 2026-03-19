@@ -787,80 +787,81 @@ fn updateCachedTime() void {
     }
 }
 
-/// Optimized taskbar drawing with pre-computed colors
+/// MacOS-style centered translucent Dock (Hyprland UI)
 fn drawTaskbar() void {
-    const taskbar_y = @as(i32, @intCast(screen_height - TASKBAR_HEIGHT));
+    const dock_margin_b: i32 = 8;
+    const dock_h: u32 = 44;
+    const dock_y = @as(i32, @intCast(screen_height)) - @as(i32, @intCast(dock_h)) - dock_margin_b;
 
-    // Pre-compute common colors
-    const taskbar_bg = Color.rgb(35, 35, 40);
-    const taskbar_line = Color.rgb(60, 60, 65);
-    const btn_border = Color.rgb(80, 80, 85);
-    const tray_bg = Color.rgb(45, 45, 50);
-    const tray_border = Color.rgb(60, 60, 65);
+    // Calculate total dock width (Start + Tray + Windows)
+    var visible_windows: u32 = 0;
+    var i: usize = 0;
+    while (i < window_count) : (i += 1) {
+        if (windows[i].visible) visible_windows += 1;
+    }
+    
+    const item_w: u32 = 50;
+    // 60px (start) + 120px (tray) + padding + (windows * 55)
+    const dock_w: u32 = 60 + 120 + 20 + (visible_windows * (item_w + 5));
+    const dock_x = @as(i32, @intCast(screen_width / 2)) - @as(i32, @intCast(dock_w / 2));
 
-    // Taskbar background (single fill)
-    graphics.fillRect(0, taskbar_y, screen_width, TASKBAR_HEIGHT, taskbar_bg);
-    graphics.drawLine(0, taskbar_y, @as(i32, @intCast(screen_width)), taskbar_y, taskbar_line);
+    // Draw Translucent MacOS Dock background
+    graphics.fillRoundRectAlpha(dock_x, dock_y, dock_w, dock_h, 8, Color.rgba(30, 30, 35, 180));
+    graphics.drawRoundRectAlpha(dock_x, dock_y, dock_w, dock_h, 8, Color.rgba(100, 150, 255, 100));
 
-    // Start button
-    const start_color = if (start_menu_open) Color.rgb(70, 70, 75) else Color.rgb(50, 120, 200);
-    graphics.fillRect(4, taskbar_y + 4, 60, 24, start_color);
-    graphics.drawRect(4, taskbar_y + 4, 60, 24, btn_border);
-    font.drawString(14, taskbar_y + 8, "Start", graphics.WHITE, null);
+    // Start Button (Mac Apple Logo style substitute)
+    const start_color = if (start_menu_open) Color.rgba(100, 100, 110, 200) else Color.rgba(60, 60, 65, 150);
+    graphics.fillRoundRectAlpha(dock_x + 8, dock_y + 6, 44, 32, 4, start_color);
+    font.drawString(dock_x + 16, dock_y + 16, "OS", graphics.WHITE, null);
 
-    // System tray (wider for memory bar)
-    const tray_x = @as(i32, @intCast(screen_width)) - 150;
-    graphics.fillRect(tray_x, taskbar_y + 2, 146, 28, tray_bg);
-    graphics.drawRect(tray_x, taskbar_y + 2, 146, 28, tray_border);
+    // Active Window Icons
+    var btn_x: i32 = dock_x + 60;
+    const btn_focused = Color.rgba(80, 150, 255, 200);
+    const btn_normal = Color.rgba(50, 50, 55, 150);
 
-    // Memory usage bar (clickable - opens Task Manager)
+    var j: usize = 0;
+    while (j < window_count) : (j += 1) {
+        if (windows[j].visible) {
+            const btn_c = if (windows[j].focused) btn_focused else btn_normal;
+            graphics.fillRoundRectAlpha(btn_x, dock_y + 6, item_w, 32, 4, btn_c);
+            
+            // App Initial (first 2 chars of title)
+            const title = windows[j].getTitle();
+            const len = @min(2, title.len);
+            font.drawString(btn_x + 16, dock_y + 16, title[0..len], graphics.WHITE, null);
+            
+            // Dot indicator for open app
+            if (windows[j].focused) {
+                graphics.fillRectAlpha(btn_x + 22, dock_y + 40, 6, 2, Color.rgba(255, 255, 255, 200));
+            }
+            btn_x += @intCast(item_w + 5);
+        }
+    }
+
+    // System Tray (Right side of dock)
+    const tray_x = dock_x + @as(i32, @intCast(dock_w)) - 130;
+    graphics.fillRoundRectAlpha(tray_x, dock_y + 6, 120, 32, 4, Color.rgba(40, 40, 45, 150));
+
+    // Memory usage bubble
     const heap = @import("../mm/heap.zig");
     const mem_used = heap.getUsedMemory();
     const mem_total = heap.getTotalSize();
-    // Use u64 to avoid overflow in multiplication
     const mem_pct: u32 = if (mem_total > 0) @truncate((@as(u64, mem_used) * 100) / @as(u64, mem_total)) else 0;
-    const bar_width: u32 = @min(24, (mem_pct * 24) / 100);
-    graphics.fillRect(tray_x + 4, taskbar_y + 8, 24, 14, Color.rgb(40, 40, 45));
-    const bar_color = if (mem_pct > 80) Color.rgb(200, 80, 80) else if (mem_pct > 50) Color.rgb(200, 180, 80) else Color.rgb(80, 200, 120);
-    graphics.fillRect(tray_x + 4, taskbar_y + 8, bar_width, 14, bar_color);
-    graphics.drawRect(tray_x + 4, taskbar_y + 8, 24, 14, Color.rgb(60, 60, 65));
+    const bar_color = if (mem_pct > 80) Color.rgb(255, 80, 80) else Color.rgb(80, 255, 120);
+    graphics.fillRectAlpha(tray_x + 6, dock_y + 18, 16, 8, bar_color);
 
-    // Network icon (clickable - opens Ping Tool)
+    // Network dot
     const net = @import("../net/net.zig");
-    const net_color = if (net.hasNic()) Color.rgb(80, 200, 120) else Color.rgb(200, 80, 80);
-    graphics.fillRect(tray_x + 32, taskbar_y + 8, 14, 14, net_color);
-    graphics.drawRect(tray_x + 32, taskbar_y + 8, 14, 14, Color.rgb(60, 60, 65));
-    // Network bars icon
-    graphics.fillRect(tray_x + 34, taskbar_y + 16, 2, 4, Color.rgb(30, 30, 35));
-    graphics.fillRect(tray_x + 38, taskbar_y + 14, 2, 6, Color.rgb(30, 30, 35));
-    graphics.fillRect(tray_x + 42, taskbar_y + 12, 2, 8, Color.rgb(30, 30, 35));
+    const net_color = if (net.hasNic()) Color.rgb(80, 255, 120) else Color.rgb(255, 80, 80);
+    graphics.fillCircle(tray_x + 34, dock_y + 22, 4, net_color);
 
-    // Clock (cached - only update once per second)
+    // Clock
     updateCachedTime();
     if (cached_date_len > 0) {
-        font.drawString(tray_x + 50, taskbar_y + 6, cached_date_buf[0..cached_date_len], Color.rgb(180, 180, 185), null);
+        font.drawString(tray_x + 46, dock_y + 10, cached_date_buf[0..cached_date_len], Color.rgba(200, 200, 205, 200), null);
     }
     if (cached_time_len > 0) {
-        font.drawString(tray_x + 50, taskbar_y + 16, cached_time_buf[0..cached_time_len], graphics.WHITE, null);
-    }
-
-    // Window buttons - only draw visible windows
-    var btn_x: i32 = 70;
-    const btn_focused = Color.rgb(60, 130, 210);
-    const btn_normal = Color.rgb(55, 55, 60);
-    const btn_indicator = Color.rgb(100, 180, 255);
-
-    var i: usize = 0;
-    while (i < window_count) : (i += 1) {
-        if (windows[i].visible) {
-            const btn_color = if (windows[i].focused) btn_focused else btn_normal;
-            graphics.fillRect(btn_x, taskbar_y + 4, 100, 24, btn_color);
-            if (windows[i].focused) {
-                graphics.fillRect(btn_x, taskbar_y + 26, 100, 2, btn_indicator);
-            }
-            font.drawString(btn_x + 6, taskbar_y + 8, windows[i].getTitle(), graphics.WHITE, null);
-            btn_x += 104;
-        }
+        font.drawString(tray_x + 46, dock_y + 22, cached_time_buf[0..cached_time_len], graphics.WHITE, null);
     }
 
     if (start_menu_open) {
@@ -1044,11 +1045,23 @@ fn handleRightClick(mx: i32, my: i32) void {
 pub fn handleMouseClick(mx: i32, my: i32) void {
     // Reset screensaver on click
     screensaver.resetIdle();
-
-    const taskbar_y = @as(i32, @intCast(screen_height - TASKBAR_HEIGHT));
-
-    // Play click sound
     playClickSound();
+
+    // Calculate MacOS Dock Bounds dynamically
+    const dock_margin_b: i32 = 8;
+    const dock_h: u32 = 44;
+    const dock_y = @as(i32, @intCast(screen_height)) - @as(i32, @intCast(dock_h)) - dock_margin_b;
+
+    var visible_windows: u32 = 0;
+    var w_idx: usize = 0;
+    while (w_idx < window_count) : (w_idx += 1) {
+        if (windows[w_idx].visible) visible_windows += 1;
+    }
+    
+    const item_w: u32 = 50;
+    const dock_w: u32 = 60 + 120 + 20 + (visible_windows * (item_w + 5));
+    const dock_x = @as(i32, @intCast(screen_width / 2)) - @as(i32, @intCast(dock_w / 2));
+    const tray_x = dock_x + @as(i32, @intCast(dock_w)) - 130;
 
     // Close date popup if clicking outside
     if (date_popup_open) {
@@ -1074,61 +1087,62 @@ pub fn handleMouseClick(mx: i32, my: i32) void {
         return;
     }
 
-    // Start button
-    if (mx >= 4 and mx < 64 and my >= taskbar_y + 4 and my < taskbar_y + 28) {
-        start_menu_open = !start_menu_open;
-        return;
-    }
-
-    // System tray clicks
-    const tray_x = @as(i32, @intCast(screen_width)) - 150;
-    if (my >= taskbar_y + 4 and my < taskbar_y + 28) {
-        // Memory bar click - open Task Manager
-        if (mx >= tray_x + 4 and mx < tray_x + 28) {
-            _ = createWindowWithType(140, 70, 310, 250, "Task Manager", .taskmanager);
+    // Check if click is inside the Dock
+    if (my >= dock_y and my < dock_y + @as(i32, @intCast(dock_h)) and mx >= dock_x and mx < dock_x + @as(i32, @intCast(dock_w))) {
+        // Start button (Apple logo equivalent)
+        if (mx >= dock_x + 8 and mx < dock_x + 52) {
+            start_menu_open = !start_menu_open;
             return;
         }
-        // Network icon click - open Ping Tool
-        if (mx >= tray_x + 32 and mx < tray_x + 48) {
-            _ = createWindowWithType(150, 80, 280, 200, "Ping Tool", .pingui);
-            return;
-        }
-        // Clock click - toggle date popup
-        if (mx >= tray_x + 50 and mx < tray_x + 140) {
-            date_popup_open = !date_popup_open;
-            if (date_popup_open) {
-                date_popup_x = tray_x + 10;
-                date_popup_y = taskbar_y - 85;
+        
+        // System tray clicks
+        if (mx >= tray_x and mx < tray_x + 120) {
+            // Memory icon
+            if (mx < tray_x + 30) {
+                _ = createWindowWithType(140, 70, 310, 250, "Task Manager", .taskmanager);
+                return;
             }
-            return;
+            // Ping Tool via Network Node
+            if (mx >= tray_x + 30 and mx < tray_x + 40) {
+                _ = createWindowWithType(150, 80, 280, 200, "Ping Tool", .pingui);
+                return;
+            }
+            // Clock
+            if (mx >= tray_x + 40) {
+                date_popup_open = !date_popup_open;
+                if (date_popup_open) {
+                    date_popup_x = tray_x;
+                    date_popup_y = dock_y - 90;
+                }
+                return;
+            }
         }
-    }
 
-    // Taskbar window buttons - restore minimized windows
-    if (my >= taskbar_y and my < taskbar_y + @as(i32, @intCast(TASKBAR_HEIGHT))) {
-        var btn_x: i32 = 70;
-        var i: usize = 0;
-        while (i < window_count) : (i += 1) {
-            if (windows[i].visible) {
-                if (mx >= btn_x and mx < btn_x + 100) {
-                    if (windows[i].minimized) {
-                        windows[i].minimized = false;
+        // Active Apps Click
+        var btn_x: i32 = dock_x + 60;
+        var btn_i: usize = 0;
+        while (btn_i < window_count) : (btn_i += 1) {
+            if (windows[btn_i].visible) {
+                if (mx >= btn_x and mx < btn_x + @as(i32, @intCast(item_w))) {
+                    if (windows[btn_i].minimized) {
+                        windows[btn_i].minimized = false;
                     }
                     if (focused_window) |prev| {
                         windows[prev].focused = false;
                     }
-                    focused_window = i;
-                    windows[i].focused = true;
+                    focused_window = btn_i;
+                    windows[btn_i].focused = true;
                     return;
                 }
-                btn_x += 104;
+                btn_x += @intCast(item_w + 5);
             }
         }
+        return; // Clicked empty dock space
     }
 
     if (start_menu_open) {
         const menu_x: i32 = 4;
-        const menu_y = taskbar_y - @as(i32, @intCast(START_MENU_HEIGHT + 28));
+        const menu_y = dock_y - @as(i32, @intCast(START_MENU_HEIGHT + 28));
 
         if (mx >= menu_x and mx < menu_x + @as(i32, @intCast(START_MENU_WIDTH)) and
             my >= menu_y and my < menu_y + @as(i32, @intCast(START_MENU_HEIGHT + 28)))
