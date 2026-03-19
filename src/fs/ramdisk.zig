@@ -38,8 +38,7 @@ pub const Ramdisk = struct {
             : [dest] "{edi}" (ptr),
               [val] "{al}" (@as(u8, 0)),
               [count] "{ecx}" (size_bytes),
-            : .{ .edi = true, .ecx = true, .memory = true }
-        );
+            : .{ .edi = true, .ecx = true, .memory = true });
 
         return Ramdisk{
             .base = base_addr,

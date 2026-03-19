@@ -6,23 +6,9 @@ const std = @import("std");
 const serial = @import("../drivers/serial.zig");
 const rtc = @import("../drivers/rtc.zig");
 
-pub const AuditLevel = enum {
-    INFO,
-    WARNING,
-    CRITICAL,
-    ALERT
-};
+pub const AuditLevel = enum { INFO, WARNING, CRITICAL, ALERT };
 
-pub const AuditEvent = enum {
-    SYSTEM_BOOT,
-    LOGIN_ATTEMPT,
-    PRIVILEGE_ESCALATION,
-    FILE_ACCESS,
-    NETWORK_CONNECTION,
-    FIREWALL_DROP,
-    TOR_CIRCUIT_CHANGE,
-    MEMORY_WIPE
-};
+pub const AuditEvent = enum { SYSTEM_BOOT, LOGIN_ATTEMPT, PRIVILEGE_ESCALATION, FILE_ACCESS, NETWORK_CONNECTION, FIREWALL_DROP, TOR_CIRCUIT_CHANGE, MEMORY_WIPE };
 
 var initialized: bool = false;
 
@@ -35,7 +21,7 @@ pub fn log(level: AuditLevel, event: AuditEvent, message: []const u8) void {
     if (!initialized) return;
 
     // Format: [TIMESTAMP] [LEVEL] [EVENT] Message
-    
+
     // Timestamp
     const dt = rtc.getDateTime();
     serial.printInt(dt.year);

@@ -17,8 +17,10 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
     const content_height = win.height - @as(u32, @intCast(TITLE_BAR_HEIGHT)) - 8;
     const text_area_height = content_height - STATUS_BAR_HEIGHT;
     const text_area_width = content_width - @as(u32, @intCast(LINE_NUM_WIDTH));
-    const chars_per_line: usize = @intCast(@max(10, @divTrunc(@as(i32, @intCast(text_area_width)) - 8, 8)));
-    const max_lines: usize = @intCast(@max(1, @divTrunc(@as(i32, @intCast(text_area_height)) - 8, 12)));
+    const t_w = @as(i32, @intCast(text_area_width)) - 8;
+    const chars_per_line: usize = @intCast(@max(10, @divTrunc(t_w, 8)));
+    const t_h = @as(i32, @intCast(text_area_height)) - 8;
+    const max_lines: usize = @intCast(@max(1, @divTrunc(t_h, 12)));
 
     // Line number gutter with better styling
     graphics.fillRect(x, y, @intCast(LINE_NUM_WIDTH), text_area_height, graphics.Color.rgb(245, 245, 250));

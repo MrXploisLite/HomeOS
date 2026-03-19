@@ -214,7 +214,7 @@ fn sendPing() void {
     const base_time: u16 = getSimulatedLatency(target_ip);
     // Use random jitter for realism (0-50% of base time)
     const jitter_max = @max(1, base_time / 2);
-    const jitter: u16 = @truncate(rng.getRange(jitter_max)); 
+    const jitter: u16 = @truncate(rng.getRange(jitter_max));
     const delay: u16 = base_time + jitter;
 
     // Small chance of packet loss for realism (5%)

@@ -75,7 +75,8 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
     const header_height: u32 = 20;
     const status_height: u32 = 18;
     const list_height = content_height - header_height - status_height - 4;
-    const max_visible: usize = @intCast(@max(1, @divTrunc(@as(i32, @intCast(list_height)), 14)));
+    const l_h = @as(i32, @intCast(list_height));
+    const max_visible: usize = @intCast(@max(1, @divTrunc(l_h, 14)));
     cached_max_visible = max_visible;
 
     // Header
@@ -131,7 +132,8 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
         // Log message
         const msg_len = log_lengths[buf_idx];
         if (msg_len > 0) {
-            const max_chars: usize = @intCast(@max(10, @divTrunc(@as(i32, @intCast(content_width)) - 20, 6)));
+            const c_w = @as(i32, @intCast(content_width)) - 20;
+            const max_chars: usize = @intCast(@max(10, @divTrunc(c_w, 6)));
             const display_len = @min(msg_len, max_chars);
             font.drawString(x + 12, row_y + 1, log_buffer[buf_idx][0..display_len], Color.rgb(200, 200, 210), null);
         }

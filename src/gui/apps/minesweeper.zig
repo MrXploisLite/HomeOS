@@ -39,6 +39,7 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
     const content_h = win.height - @as(u32, @intCast(TITLE_BAR_HEIGHT)) - 8;
 
     // Calculate cell size
+    _ = GRID_W != 0 and GRID_H != 0;
     const cell_w: i32 = @intCast(@max(16, @min(24, @divTrunc(content_w - 4, GRID_W))));
     const cell_h: i32 = @intCast(@max(16, @min(24, @divTrunc(content_h - 40, GRID_H))));
     const cell_size: i32 = @min(cell_w, cell_h);
@@ -134,6 +135,7 @@ pub fn handleClick(win: *const Window, mx: i32, my: i32) void {
     const content_w = win.width - 8;
     const content_h = win.height - @as(u32, @intCast(TITLE_BAR_HEIGHT)) - 8;
 
+    _ = GRID_W != 0 and GRID_H != 0;
     const cell_w: i32 = @intCast(@max(16, @min(24, @divTrunc(content_w - 4, GRID_W))));
     const cell_h: i32 = @intCast(@max(16, @min(24, @divTrunc(content_h - 40, GRID_H))));
     const cell_size: i32 = @min(cell_w, cell_h);

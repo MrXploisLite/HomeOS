@@ -69,7 +69,8 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
     const header_height: u32 = 20;
     const status_height: u32 = 18;
     const list_height = content_height - toolbar_height - header_height - status_height - 4;
-    const max_visible: usize = @intCast(@max(1, @divTrunc(@as(i32, @intCast(list_height)), 16)));
+    const l_h = @as(i32, @intCast(list_height));
+    const max_visible: usize = @intCast(@max(1, @divTrunc(l_h, 16)));
     cached_max_visible = max_visible; // Cache for handleKey
 
     // Toolbar
@@ -81,7 +82,8 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
     graphics.fillRect(x + 60, y + 2, path_width, 18, graphics.WHITE);
     graphics.drawRect(x + 60, y + 2, path_width, 18, graphics.DARK_GRAY);
     // Clip path to fit in path bar
-    const max_path_chars: usize = @intCast(@max(4, @divTrunc(@as(i32, @intCast(path_width)) - 8, 8)));
+    const p_w = @as(i32, @intCast(path_width)) - 8;
+    const max_path_chars: usize = @intCast(@max(4, @divTrunc(p_w, 8)));
     const display_path_len = @min(path_len, max_path_chars);
     font.drawString(x + 64, y + 4, current_path[0..display_path_len], graphics.BLACK, null);
 
@@ -149,7 +151,8 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
             graphics.fillRect(x + 12, row_y + 2, 4, 4, graphics.LIGHT_GRAY);
         }
         // Clip filename to fit in name column (max ~15 chars before size column)
-        const max_name_chars: usize = @intCast(@max(8, @divTrunc(@as(i32, @intCast(content_width)) - 160, 8)));
+        const c_w = @as(i32, @intCast(content_width)) - 160;
+        const max_name_chars: usize = @intCast(@max(8, @divTrunc(c_w, 8)));
         var name_len: usize = 0;
         while (name_len < 12 and file_names[i][name_len] != 0) : (name_len += 1) {}
         const display_len = @min(name_len, max_name_chars);

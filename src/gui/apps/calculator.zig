@@ -49,8 +49,10 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
     const avail_w: i32 = @intCast(content_w -| padding2);
     const display_overhead: u32 = @as(u32, @intCast(DISPLAY_H + 8 + 2 * PADDING));
     const avail_h: i32 = @intCast(content_h -| display_overhead);
-    const btn_w: i32 = @max(24, @divTrunc(@max(0, avail_w -| 3 * BTN_GAP), 4));
-    const btn_h: i32 = @max(18, @divTrunc(@max(0, avail_h -| 5 * BTN_GAP), 6));
+    const a_w = @max(0, avail_w -| 3 * BTN_GAP);
+    const btn_w: i32 = @max(24, @divTrunc(a_w, 4));
+    const a_h = @max(0, avail_h -| 5 * BTN_GAP);
+    const btn_h: i32 = @max(18, @divTrunc(a_h, 6));
 
     const total_w: i32 = 4 * btn_w + 3 * BTN_GAP + 2 * PADDING;
 
@@ -69,7 +71,8 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
 
     // Display text (right-aligned, vertically centered, with clipping)
     const display_str = win.calc_display[0..win.calc_display_len];
-    const max_display_chars: usize = @intCast(@max(4, @divTrunc(@as(i32, @intCast(display_w)) - 16, 8)));
+    const d_w = @as(i32, @intCast(display_w)) - 16;
+    const max_display_chars: usize = @intCast(@max(4, @divTrunc(d_w, 8)));
     const visible_len = @min(win.calc_display_len, max_display_chars);
     const start_idx = if (win.calc_display_len > max_display_chars) win.calc_display_len - max_display_chars else 0;
     const visible_str = display_str[start_idx..];
@@ -163,8 +166,10 @@ pub fn handleClick(win: *Window, mx: i32, my: i32) void {
     const avail_w: i32 = @intCast(content_w -| padding2);
     const display_overhead: u32 = @as(u32, @intCast(DISPLAY_H + 8 + 2 * PADDING));
     const avail_h: i32 = @intCast(content_h -| display_overhead);
-    const btn_w: i32 = @max(24, @divTrunc(@max(0, avail_w -| 3 * BTN_GAP), 4));
-    const btn_h: i32 = @max(18, @divTrunc(@max(0, avail_h -| 5 * BTN_GAP), 6));
+    const a_w = @max(0, avail_w -| 3 * BTN_GAP);
+    const btn_w: i32 = @max(24, @divTrunc(a_w, 4));
+    const a_h = @max(0, avail_h -| 5 * BTN_GAP);
+    const btn_h: i32 = @max(18, @divTrunc(a_h, 6));
 
     const btn_start_y = content_y + PADDING + DISPLAY_H + 8;
 
@@ -361,6 +366,7 @@ fn doSqrt(win: *Window) void {
     var guess: i64 = x;
     var i: usize = 0;
     while (i < 20) : (i += 1) {
+        _ = guess != 0;
         const new_guess = @divTrunc(guess + @divTrunc(x * scale, guess), 2);
         if (new_guess == guess) break;
         guess = new_guess;
@@ -391,6 +397,7 @@ fn doInverse(win: *Window) void {
     }
     const scale: i64 = 10000;
     // 1/x = scale^2 / val
+    _ = val != 0;
     const result = @divTrunc(scale * scale, val);
     formatResultFloat(win, result);
     win.calc_new_input = true;

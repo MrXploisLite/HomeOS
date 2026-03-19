@@ -10,6 +10,7 @@ Run: python test_homeos.py
 import os
 import subprocess
 import sys
+import itertools
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
@@ -126,7 +127,7 @@ class HomeOSTestSuite:
                     "Project Builds Successfully",
                     Status.FAILED,
                     Severity.CRITICAL,
-                    f"Build failed: {result.stderr[:200]}"
+                    f"Build failed: {''.join(itertools.islice(str(result.stderr), 200))}"
                 ))
         else:
             self.add_result(TestResult(
@@ -184,10 +185,10 @@ class HomeOSTestSuite:
         print(color("[VERSION CONSISTENCY TESTS]", Colors.BOLD + Colors.BLUE))
         
         version_files = [
-            ("src/shell/cmd_executor.zig", "0.28.0"),
-            ("src/shell/cmd_system.zig", "0.28.0"),
-            ("src/gui/apps/sysinfo.zig", "0.28.0"),
-            ("src/gui/desktop.zig", "0.28.0"),
+            ("src/shell/cmd_executor.zig", "0.32.0"),
+            ("src/shell/cmd_system.zig", "0.32.0"),
+            ("src/gui/apps/sysinfo.zig", "0.32.0"),
+            ("src/gui/desktop.zig", "0.32.0"),
         ]
         
         for filepath, expected_version in version_files:
@@ -653,7 +654,9 @@ class HomeOSTestSuite:
         issues = []
         
         for root, dirs, files in os.walk("src"):
-            dirs[:] = [d for d in dirs if d not in ['.zig-cache', 'zig-out']]
+            _d = [d for d in dirs if d not in ['.zig-cache', 'zig-out']]
+            dirs.clear()
+            dirs.extend(_d)
             for file in files:
                 if file.endswith('.zig'):
                     filepath = os.path.join(root, file)
@@ -665,7 +668,7 @@ class HomeOSTestSuite:
                             # Check for undefined behavior patterns
                             if '@intCast' in line and 'truncate' not in line:
                                 # intCast without bounds check can panic
-                                context = '\n'.join(lines[max(0,i-5):i+2])
+                                context = '\n'.join(itertools.islice(lines, max(0,i-5), i+2))
                                 # Safe patterns: if check, @min, @max, comparison, or known safe casts
                                 safe_patterns = ['if', '@min', '@max', '< ', '> ', '<= ', '>= ', 'usize', 'i32', 'u32']
                                 is_safe = any(p in context for p in safe_patterns)
@@ -675,7 +678,7 @@ class HomeOSTestSuite:
                             # Check for potential null pointer - more strict
                             if '.?' in line and 'if' not in line and 'orelse' not in line and 'while' not in line:
                                 # Skip if it's in a safe context
-                                context = '\n'.join(lines[max(0,i-3):i+1])
+                                context = '\n'.join(itertools.islice(lines, max(0,i-3), i+1))
                                 if 'if' not in context and 'orelse' not in context:
                                     issues.append((filepath, i, "Optional access without check"))
                                 
@@ -721,7 +724,7 @@ class HomeOSTestSuite:
                         # Check for length increment without bounds check
                         if '_len' in line and '+=' in line and '1' in line:
                             # Look for bounds check in wider context (15 lines)
-                            context = '\n'.join(lines[max(0,i-15):i+1])
+                            context = '\n'.join(itertools.islice(lines, max(0,i-15), i+1))
                             # Must have BOTH 'if'/'while' AND a comparison with buffer size
                             has_if = 'if' in context or 'while' in context
                             has_bound = '< ' in context or '<=' in context or '.len' in context
@@ -739,7 +742,7 @@ class HomeOSTestSuite:
                 Severity.HIGH,
                 f"Found {len(overflow_risks)} potential buffer issues"
             ))
-            for risk in overflow_risks[:3]:  # Show first 3
+            for risk in itertools.islice(overflow_risks, 3):  # Show first 3
                 print(f"    {risk[0]}:{risk[1]} - {risk[2]}")
         else:
             self.add_result(TestResult(
@@ -757,7 +760,9 @@ class HomeOSTestSuite:
         bugs = []
         
         for root, dirs, files in os.walk("src"):
-            dirs[:] = [d for d in dirs if d not in ['.zig-cache', 'zig-out']]
+            _d = [d for d in dirs if d not in ['.zig-cache', 'zig-out']]
+            dirs.clear()
+            dirs.extend(_d)
             for file in files:
                 if file.endswith('.zig'):
                     filepath = os.path.join(root, file)
@@ -794,7 +799,7 @@ class HomeOSTestSuite:
                 Severity.MEDIUM,
                 f"Found {len(bugs)} potential logic issues"
             ))
-            for bug in bugs[:5]:  # Show first 5
+            for bug in itertools.islice(bugs, 5):  # Show first 5
                 print(f"    {bug[0]}:{bug[1]} - {bug[2]}")
         else:
             self.add_result(TestResult(
@@ -815,7 +820,9 @@ class HomeOSTestSuite:
         bounds_issues = []
         
         for root, dirs, files in os.walk("src"):
-            dirs[:] = [d for d in dirs if d not in ['.zig-cache', 'zig-out']]
+            _d = [d for d in dirs if d not in ['.zig-cache', 'zig-out']]
+            dirs.clear()
+            dirs.extend(_d)
             for file in files:
                 if file.endswith('.zig'):
                     filepath = os.path.join(root, file)
@@ -835,9 +842,9 @@ class HomeOSTestSuite:
                                 const_div = re.search(r'@(?:divTrunc|divFloor|mod)\([^,]+,\s*(\d+|scale|SCALE)\s*\)', line)
                                 if not const_div:
                                     # Check if there's a zero check nearby
-                                    context = ''.join(lines[max(0,i-5):i])
+                                    context = ''.join(itertools.islice(lines, max(0,i-5), i))
                                     if '!= 0' not in context and '> 0' not in context:
-                                        div_issues.append((filepath, i, line.strip()[:60]))
+                                        div_issues.append((filepath, i, "".join(itertools.islice(line.strip(), 60))))
                             
                             # Unsafe pointer casts
                             if '@ptrFromInt' in line or '@intFromPtr' in line:
@@ -846,12 +853,12 @@ class HomeOSTestSuite:
                             # Array access without bounds check
                             # This is a heuristic - look for [i] or [idx] patterns
                             import re
-                            if re.search(r'\[\s*\w+\s*\]', line) and 'if' not in ''.join(lines[max(0,i-2):i]):
+                            if re.search(r'\[\s*\w+\s*\]', line) and 'if' not in ''.join(itertools.islice(lines, max(0,i-2), i)):
                                 # Check if there's a bounds check nearby
-                                context = ''.join(lines[max(0,i-3):i])
+                                context = ''.join(itertools.islice(lines, max(0,i-3), i))
                                 if '.len' not in context and 'while' not in context and 'for' not in context:
                                     if 'const ' not in line and 'var ' not in line:
-                                        bounds_issues.append((filepath, i, line.strip()[:50]))
+                                        bounds_issues.append((filepath, i, "".join(itertools.islice(line.strip(), 50))))
                                 
         # Report TODO/FIXME
         if todo_issues:
@@ -870,6 +877,7 @@ class HomeOSTestSuite:
             ))
             
         # Report potential division by zero
+        for iss in div_issues: print(iss)
         if len(div_issues) > 5:  # Some false positives expected
             self.add_result(TestResult(
                 "Code Quality: Division Safety",
@@ -918,7 +926,7 @@ class HomeOSTestSuite:
             print(color("\n  FAILURES:", Colors.BOLD + Colors.RED))
             for r in failures:
                 sev_color = Colors.RED if r.severity == Severity.CRITICAL else Colors.YELLOW
-                print(f"    [{color(r.severity.value, sev_color)}] {r.name}")
+                print(f"    [{color(str(r.severity.value), sev_color)}] {r.name}")
                 print(f"      Reason: {r.reason}")
                 if r.file:
                     print(f"      File: {r.file}")
@@ -928,7 +936,7 @@ class HomeOSTestSuite:
         if warns:
             print(color("\n  WARNINGS:", Colors.BOLD + Colors.YELLOW))
             for r in warns:
-                print(f"    [{r.severity.value}] {r.name}")
+                print(f"    [{str(r.severity.value)}] {r.name}")
                 print(f"      Reason: {r.reason}")
                 
         print(color("\n" + "="*60, Colors.CYAN))

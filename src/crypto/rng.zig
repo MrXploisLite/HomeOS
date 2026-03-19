@@ -25,8 +25,7 @@ fn detectHardwareRng() void {
     asm volatile ("cpuid"
         : [ecx] "={ecx}" (ecx),
         : [eax] "{eax}" (@as(u32, 1)),
-        : .{ .ebx = true, .edx = true }
-    );
+        : .{ .ebx = true, .edx = true });
 
     if ((ecx & (1 << 30)) != 0) {
         has_rdrand = true;
@@ -112,8 +111,7 @@ fn rdrand32() ?u32 {
             : [out] "={eax}" (result),
               [cf] "=r" (cf),
             :
-            : .{ .cc = true }
-        );
+            : .{ .cc = true });
         if (cf != 0) return result;
     }
     return null;

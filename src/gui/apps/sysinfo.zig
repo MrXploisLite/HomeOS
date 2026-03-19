@@ -116,7 +116,7 @@ pub fn drawAbout(win: *const window.Window, x: i32, y: i32) void {
 
     // Title
     font.drawString(x, line_y, "Home OS", graphics.Color.rgb(50, 120, 200), null);
-    font.drawString(x + 64, line_y, "v0.29.0", graphics.DARK_GRAY, null);
+    font.drawString(x + 64, line_y, "v0.32.0", graphics.DARK_GRAY, null);
     line_y += line_spacing;
     font.drawString(x, line_y, "Kernel: Ciko v0.1", graphics.DARK_GRAY, null);
     line_y += line_spacing + 6;

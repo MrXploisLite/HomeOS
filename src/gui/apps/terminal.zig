@@ -51,8 +51,9 @@ pub fn draw(win: *const Window, x: i32, y: i32) void {
     const line_height: i32 = 14;
     const prompt_height: i32 = 20;
     const output_height = @as(i32, @intCast(content_height)) - prompt_height;
-    const max_lines: usize = @intCast(@max(1, @divTrunc(output_height, line_height)));
-    const max_chars: usize = @intCast(@max(10, @divTrunc(@as(i32, @intCast(content_width)) - 20, 8)));
+    const max_lines: usize = @intCast(@max(1, @divTrunc(output_height, 14)));
+    const c_w = @as(i32, @intCast(content_width)) - 20;
+    const max_chars: usize = @intCast(@max(10, @divTrunc(c_w, 8)));
 
     // Count total lines
     var total_lines: usize = 0;
