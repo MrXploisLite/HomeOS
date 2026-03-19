@@ -285,7 +285,7 @@ const wallpaper_colors = [_]Color{
 
 /// Draw wallpaper (gradient or solid color)
 fn drawWallpaper() void {
-    const h = screen_height - TASKBAR_HEIGHT;
+    const h = screen_height; // Full screen to cover behind the floating dock
 
     // Solid color wallpapers (fast path)
     if (wallpaper_style > 0 and wallpaper_style < wallpaper_colors.len) {
