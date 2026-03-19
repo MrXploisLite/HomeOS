@@ -3,9 +3,11 @@ ENTRY(_start)
 
 PHDRS
 {
-    text    PT_LOAD    FLAGS((1 << 0) | (1 << 2)) ; /* Execute + Read */
+    headers PT_PHDR PHDRS;
+    text    PT_LOAD FILEHDR PHDRS FLAGS((1 << 0) | (1 << 2)) ; /* Execute + Read */
     rodata  PT_LOAD    FLAGS((1 << 2)) ;            /* Read only */
     data    PT_LOAD    FLAGS((1 << 1) | (1 << 2)) ; /* Write + Read */
+    dynamic PT_DYNAMIC ;
 }
 
 SECTIONS
@@ -20,7 +22,6 @@ SECTIONS
     . = ALIGN(4096);
 
     .rodata : {
-        KEEP(*(.requests))
         *(.rodata .rodata.*)
     } :rodata
 
@@ -34,4 +35,9 @@ SECTIONS
         *(COMMON)
         *(.bss .bss.*)
     } :data
+    
+    /DISCARD/ : {
+        *(.eh_frame)
+        *(.note .note.*)
+    }
 }
