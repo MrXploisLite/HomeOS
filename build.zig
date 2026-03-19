@@ -1,84 +1,71 @@
-// Home OS Build Configuration
-// Copyright © 2025 Romy Rianata - Home OS
-
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // Target: x86 (32-bit) freestanding for Phase 1
-    // This allows direct QEMU -kernel boot with multiboot
-    // Disable SSE/MMX to avoid Invalid Opcode exceptions
-    var target_query: std.Target.Query = .{
-        .cpu_arch = .x86,
+    // 64-Bit Arch Target
+    const targetQuery = std.Target.Query{
+        .cpu_arch = .x86_64,
         .os_tag = .freestanding,
         .abi = .none,
     };
-    // Disable SSE and soft float - use x87 FPU only
-    target_query.cpu_features_sub = std.Target.x86.featureSet(&.{
-        .sse,
-        .sse2,
-        .mmx,
-    });
-    const target = b.resolveTargetQuery(target_query);
-
+    
+    const target = b.resolveTargetQuery(targetQuery);
     const optimize = b.standardOptimizeOption(.{});
 
+    // Main Kernel Executable
     const kernel = b.addExecutable(.{
         .name = "kernel.elf",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/kernel.zig"),
+            .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
-            .red_zone = false,
-            .stack_check = false,
-            .omit_frame_pointer = false,
         }),
     });
-
-    // Add assembly file for ISR stubs
-    kernel.root_module.addAssemblyFile(b.path("src/isr.s"));
-
-    // Add C++ files for interrupt handlers and IDT setup
-    const cpp_flags = &[_][]const u8{
-        "-m32",
-        "-ffreestanding",
-        "-fno-exceptions",
-        "-fno-rtti",
-        "-nostdlib",
-        "-mno-red-zone",
-        "-fno-stack-protector",
-    };
-
-    kernel.root_module.addCSourceFile(.{
-        .file = b.path("src/interrupt.cpp"),
-        .flags = cpp_flags,
-    });
-
-    kernel.root_module.addCSourceFile(.{
-        .file = b.path("src/idt_setup.cpp"),
-        .flags = cpp_flags,
-    });
-
-    kernel.setLinkerScript(b.path("linker.ld"));
     
-    // Rust core integration step
-    const cargo_cmd = b.addSystemCommand(&[_][]const u8{
-        "cargo", "build", "--release", "--target", "i686-unknown-linux-gnu", "--manifest-path", "src/rust_core/Cargo.toml"
-    });
-    kernel.step.dependOn(&cargo_cmd.step);
-    kernel.addObjectFile(b.path("src/rust_core/target/i686-unknown-linux-gnu/release/librust_core.a"));
+    // Memory Linking Strategy for Higher Half
+    kernel.setLinkerScript(b.path("src/linker.ld"));
+    kernel.pie = false;
+    kernel.root_module.code_model = .kernel;
 
     b.installArtifact(kernel);
 
-    // Run step for QEMU
-    const run_cmd = b.addSystemCommand(&[_][]const u8{
-        "qemu-system-i386",
-        "-kernel",
-        "zig-out/bin/kernel.elf",
-        "-m",
-        "512M",
+    // Iso Generation Pipelines
+    const create_iso_dir = b.addSystemCommand(&.{ "mkdir", "-p", "iso_root/boot/limine" });
+    const copy_kernel = b.addSystemCommand(&.{ "cp", "zig-out/bin/kernel.elf", "iso_root/boot/" });
+    const copy_limine_conf = b.addSystemCommand(&.{ "cp", "src/limine.conf", "iso_root/boot/limine/" });
+    const copy_limine_bin = b.addSystemCommand(&.{ "cp", "limine_binary/limine-bios.sys", "limine_binary/limine-bios-cd.bin", "limine_binary/limine-uefi-cd.bin", "iso_root/boot/limine/" });
+    
+    // Construct bootable ISO image
+    const xorriso = b.addSystemCommand(&[_][]const u8{
+        "xorriso", "-as", "mkisofs", "-b", "boot/limine/limine-bios-cd.bin",
+        "-no-emul-boot", "-boot-load-size", "4", "-boot-info-table",
+        "--efi-boot", "boot/limine/limine-uefi-cd.bin",
+        "-efi-boot-part", "--efi-boot-image", "--protective-msdos-label",
+        "iso_root", "-o", "homeos.iso"
     });
-    run_cmd.step.dependOn(b.getInstallStep());
+    
+    // Inject Limine stage 1 into MBR
+    const install_limine = b.addSystemCommand(&.{ "./limine_binary/limine", "bios-install", "homeos.iso" });
 
-    const run_step = b.step("run", "Run the kernel in QEMU");
-    run_step.dependOn(&run_cmd.step);
+    // Step Dependencies
+    create_iso_dir.step.dependOn(&kernel.step);
+    copy_kernel.step.dependOn(&create_iso_dir.step);
+    copy_limine_conf.step.dependOn(&copy_kernel.step);
+    copy_limine_bin.step.dependOn(&copy_limine_conf.step);
+    xorriso.step.dependOn(&copy_limine_bin.step);
+    install_limine.step.dependOn(&xorriso.step);
+
+    // QEMU Launcher
+    const run_qemu = b.addSystemCommand(&.{
+        "qemu-system-x86_64",
+        "-cdrom", "homeos.iso",
+        "-m", "512M",
+        "-D", "qemu.log",
+        "-d", "int,guest_errors",
+        "-no-reboot",
+        "-no-shutdown",
+    });
+    run_qemu.step.dependOn(&install_limine.step);
+
+    const run_step = b.step("run", "Run the 64-bit kernel in QEMU");
+    run_step.dependOn(&run_qemu.step);
 }
