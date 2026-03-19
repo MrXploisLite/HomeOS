@@ -25,7 +25,8 @@ pub fn build(b: *std.Build) void {
     kernel.root_module.code_model = .kernel;
     kernel.setLinkerScript(b.path("src/linker.ld"));
 
-    b.installArtifact(kernel);
+    const install_kernel = b.addInstallArtifact(kernel, .{});
+    b.default_step.dependOn(&install_kernel.step);
 
     // Remap ELF virtual addresses to higher half (0xffffffff80000000)
     // Zig LLD with code_model=kernel compiles to 0x1000000 by default
@@ -36,7 +37,7 @@ pub fn build(b: *std.Build) void {
         "zig-out/bin/kernel_hh.elf",
         "0xffffffff7f000000",
     });
-    remap.step.dependOn(&kernel.step);
+    remap.step.dependOn(&install_kernel.step);
     b.default_step.dependOn(&remap.step);
 
     // ISO construction steps (use kernel_hh.elf)
