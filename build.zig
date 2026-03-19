@@ -1,13 +1,13 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // 64-Bit Arch Target
+    // 64-Bit bare-metal target
     const targetQuery = std.Target.Query{
         .cpu_arch = .x86_64,
         .os_tag = .freestanding,
         .abi = .none,
     };
-    
+
     const target = b.resolveTargetQuery(targetQuery);
     const optimize = b.standardOptimizeOption(.{});
 
@@ -20,52 +20,71 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
-    
-    // Memory Linking Strategy for Higher Half
-    kernel.setLinkerScript(b.path("src/linker.ld"));
+
     kernel.pie = false;
     kernel.root_module.code_model = .kernel;
+    kernel.setLinkerScript(b.path("src/linker.ld"));
 
     b.installArtifact(kernel);
 
-    // Iso Generation Pipelines
-    const create_iso_dir = b.addSystemCommand(&.{ "mkdir", "-p", "iso_root/boot/limine" });
-    const copy_kernel = b.addSystemCommand(&.{ "cp", "zig-out/bin/kernel.elf", "iso_root/boot/" });
-    const copy_limine_conf = b.addSystemCommand(&.{ "cp", "src/limine.conf", "iso_root/boot/limine/" });
-    const copy_limine_bin = b.addSystemCommand(&.{ "cp", "limine_binary/limine-bios.sys", "limine_binary/limine-bios-cd.bin", "limine_binary/limine-uefi-cd.bin", "iso_root/boot/limine/" });
-    
-    // Construct bootable ISO image
+    // Remap ELF virtual addresses to higher half (0xffffffff80000000)
+    // Zig LLD with code_model=kernel compiles to 0x1000000 by default
+    // Offset = 0xffffffff80000000 - 0x1000000 = 0xffffffff7f000000
+    const remap = b.addSystemCommand(&[_][]const u8{
+        "python3", "src/patch_elf.py",
+        "zig-out/bin/kernel.elf",
+        "zig-out/bin/kernel_hh.elf",
+        "0xffffffff7f000000",
+    });
+    remap.step.dependOn(&kernel.step);
+    b.default_step.dependOn(&remap.step);
+
+    // ISO construction steps (use kernel_hh.elf)
+    const rm_iso = b.addSystemCommand(&.{ "rm", "-rf", "iso_root" });
+    const mk_dir = b.addSystemCommand(&.{ "mkdir", "-p", "iso_root/boot/limine" });
+    const cp_kernel = b.addSystemCommand(&.{ "cp", "zig-out/bin/kernel_hh.elf", "iso_root/boot/kernel.elf" });
+    const cp_conf = b.addSystemCommand(&.{ "cp", "src/limine.conf", "iso_root/boot/limine/" });
+    const cp_limine = b.addSystemCommand(&.{
+        "cp",
+        "limine_binary/limine-bios.sys",
+        "limine_binary/limine-bios-cd.bin",
+        "limine_binary/limine-uefi-cd.bin",
+        "iso_root/boot/limine/",
+    });
+
     const xorriso = b.addSystemCommand(&[_][]const u8{
-        "xorriso", "-as", "mkisofs", "-b", "boot/limine/limine-bios-cd.bin",
+        "xorriso", "-as", "mkisofs",
+        "-b", "boot/limine/limine-bios-cd.bin",
         "-no-emul-boot", "-boot-load-size", "4", "-boot-info-table",
         "--efi-boot", "boot/limine/limine-uefi-cd.bin",
         "-efi-boot-part", "--efi-boot-image", "--protective-msdos-label",
-        "iso_root", "-o", "homeos.iso"
+        "iso_root", "-o", "homeos.iso",
     });
-    
-    // Inject Limine stage 1 into MBR
-    const install_limine = b.addSystemCommand(&.{ "./limine_binary/limine", "bios-install", "homeos.iso" });
 
-    // Step Dependencies
-    create_iso_dir.step.dependOn(&kernel.step);
-    copy_kernel.step.dependOn(&create_iso_dir.step);
-    copy_limine_conf.step.dependOn(&copy_kernel.step);
-    copy_limine_bin.step.dependOn(&copy_limine_conf.step);
-    xorriso.step.dependOn(&copy_limine_bin.step);
-    install_limine.step.dependOn(&xorriso.step);
+    const limine_install = b.addSystemCommand(&.{
+        "./limine_binary/limine", "bios-install", "homeos.iso",
+    });
 
-    // QEMU Launcher
+    // Dependency chain
+    rm_iso.step.dependOn(&remap.step);
+    mk_dir.step.dependOn(&rm_iso.step);
+    cp_kernel.step.dependOn(&mk_dir.step);
+    cp_conf.step.dependOn(&cp_kernel.step);
+    cp_limine.step.dependOn(&cp_conf.step);
+    xorriso.step.dependOn(&cp_limine.step);
+    limine_install.step.dependOn(&xorriso.step);
+
+    // QEMU run step
     const run_qemu = b.addSystemCommand(&.{
         "qemu-system-x86_64",
         "-cdrom", "homeos.iso",
         "-m", "512M",
-        "-D", "qemu.log",
-        "-d", "int,guest_errors",
+        "-serial", "stdio",
         "-no-reboot",
         "-no-shutdown",
     });
-    run_qemu.step.dependOn(&install_limine.step);
+    run_qemu.step.dependOn(&limine_install.step);
 
-    const run_step = b.step("run", "Run the 64-bit kernel in QEMU");
+    const run_step = b.step("run", "Run HomeOS 64-bit in QEMU");
     run_step.dependOn(&run_qemu.step);
 }
